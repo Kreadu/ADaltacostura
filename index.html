@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -139,7 +140,9 @@ body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:var(--
 .whatsapp-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:14px; border:none; border-radius:var(--radius-md); background:var(--positive); color:#fff; font-size:15px; font-weight:600; cursor:pointer; margin-top:16px; box-shadow:0 2px 8px rgba(22,163,74,0.25); }
 
 /* ===== ORDERS & ADMIN ===== */
-.admin-toggle { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface-muted); border-radius:var(--radius-md); margin-bottom:14px; font-size:13px; cursor:pointer; border:1px solid var(--border); font-weight:500; }
+.admin-toggle { display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--surface); border-radius:var(--radius-md); margin-bottom:14px; font-size:13.5px; cursor:pointer; border:1.5px solid var(--accent); font-weight:600; color:var(--accent); transition:all var(--transition); }
+.admin-toggle:active { background:var(--surface-muted); }
+.admin-toggle svg { color:var(--accent); flex-shrink:0; }
 .order-card { padding:14px; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px; background:var(--surface); box-shadow:var(--shadow-sm); }
 .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 .order-status { padding:3px 10px; border-radius:var(--radius-full); font-size:11px; font-weight:600; }
@@ -277,8 +280,19 @@ body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:var(--
         <button class="filter-chip active" data-filter="all" onclick="setCategory('all')" data-i18n="filter_all">Todo</button>
       </div>
       <div id="adminControlsArea" style="display:none; margin-bottom:15px;">
-        <button class="whatsapp-btn" style="background:var(--text-primary); margin-top:0; margin-bottom:8px;" onclick="openAddModal()" data-i18n="admin_upload_btn">
-          ➕ Subir Prenda Nueva
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button class="whatsapp-btn" style="background:var(--text-primary); margin-top:0; flex:1;" onclick="openAddModal()" data-i18n="admin_upload_btn">
+            ➕ Subir Prenda Nueva
+          </button>
+          <button class="whatsapp-btn" style="background:var(--surface); color:var(--text-primary); border:1.5px solid var(--border); margin-top:0; flex:1;" onclick="openCategoryModal()" data-i18n="admin_new_category_btn">
+            🏷️ Crear Categoría
+          </button>
+        </div>
+        <button class="whatsapp-btn" style="background:var(--accent); margin-top:0; margin-bottom:8px;" onclick="copyStoreLink()" data-i18n="admin_share_link_btn">
+          📋 Compartir el link de mi tienda
+        </button>
+        <button class="btn-sm" style="width:100%; justify-content:center; color:var(--danger); border-color:var(--danger);" onclick="logoutAdmin()" data-i18n="admin_exit_btn">
+          🔓 Salir del modo administrador
         </button>
       </div>
       
@@ -309,10 +323,10 @@ body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:var(--
     </div>
 
     <div id="pedidos" class="view">
-      <div class="admin-toggle" onclick="openLoginModal()">
+      <div class="admin-toggle" id="adminToggleBar" onclick="openLoginModal()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span id="adminLabel" data-i18n="admin_label_client">Modo cliente</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary)" data-i18n="admin_lock_hint">Acceso admin 🔒</span>
+        <span id="adminLabel" data-i18n="admin_login_entry">🔑 Iniciar sesión como administrador/a</span>
+        <span style="margin-left:auto;font-size:16px;color:var(--accent);">›</span>
       </div>
       <button id="clearOrdersBtn" onclick="clearAllOrders()" style="display:none; width:100%; padding:10px; border:1px dashed var(--danger); border-radius:var(--radius-md); background:var(--surface); color:var(--danger); font-size:13px; font-weight:600; cursor:pointer; margin-bottom:14px;" data-i18n="clear_orders_btn">🧹 Vaciar todos los pedidos (usar solo para limpiar pruebas)</button>
       <div id="ordersList"></div>
@@ -349,7 +363,6 @@ body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:var(--
         <button type="button" class="password-toggle" id="passToggleBtn" onclick="togglePassword()" title="Mostrar contraseña" data-i18n-title="show_password_tooltip">👁️</button>
       </div>
       <button class="btn-full" onclick="loginAdmin()" data-i18n="login_btn">Ingresar</button>
-      <button class="btn-full" style="background:#dc2626; margin-top:10px; display:none;" id="logoutBtn" onclick="logoutAdmin()" data-i18n="logout_btn">Cerrar Sesión</button>
     </div>
   </div>
 
@@ -482,6 +495,8 @@ const I18N = {
     order_name_placeholder:'Tu nombre completo', order_phone_placeholder:'Tu número de celular',
     total_label:'Total a pagar', order_whatsapp_btn:'Pedir por WhatsApp',
     admin_label_client:'Modo cliente', admin_label_admin:'Modo vendedora (Activo)',
+    admin_login_entry:'🔑 Iniciar sesión como administrador/a', admin_share_link_btn:'📋 Compartir el link de mi tienda',
+    admin_exit_btn:'🔓 Salir del modo administrador', admin_new_category_btn:'🏷️ Crear Categoría', toast_link_copied:'¡Link copiado! Ya puedes compartirlo.',
     admin_lock_hint:'Acceso admin 🔒',
     clear_orders_btn:'🧹 Vaciar todos los pedidos (usar solo para limpiar pruebas)',
     no_orders:'No hay pedidos',
@@ -553,6 +568,8 @@ const I18N = {
     order_name_placeholder:'Your full name', order_phone_placeholder:'Your phone number',
     total_label:'Total to pay', order_whatsapp_btn:'Order via WhatsApp',
     admin_label_client:'Customer mode', admin_label_admin:'Seller mode (Active)',
+    admin_login_entry:'🔑 Log in as administrator', admin_share_link_btn:'📋 Share my store link',
+    admin_exit_btn:'🔓 Exit admin mode', admin_new_category_btn:'🏷️ Create Category', toast_link_copied:'Link copied! You can share it now.',
     admin_lock_hint:'Admin access 🔒',
     clear_orders_btn:'🧹 Clear all orders (test data cleanup only)',
     no_orders:'No orders yet',
@@ -624,6 +641,8 @@ const I18N = {
     order_name_placeholder:'Votre nom complet', order_phone_placeholder:'Votre numéro de téléphone',
     total_label:'Total à payer', order_whatsapp_btn:'Commander via WhatsApp',
     admin_label_client:'Mode client', admin_label_admin:'Mode vendeuse (Actif)',
+    admin_login_entry:'🔑 Connexion administrateur', admin_share_link_btn:'📋 Partager le lien de ma boutique',
+    admin_exit_btn:'🔓 Quitter le mode administrateur', admin_new_category_btn:'🏷️ Créer une catégorie', toast_link_copied:'Lien copié ! Vous pouvez le partager.',
     admin_lock_hint:'Accès admin 🔒',
     clear_orders_btn:'🧹 Vider toutes les commandes (nettoyage des tests uniquement)',
     no_orders:'Aucune commande',
@@ -710,7 +729,6 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('tienda_lang', lang);
   applyStaticTranslations();
-  document.getElementById('adminLabel').textContent = isAdmin ? t('admin_label_admin') : t('admin_label_client');
   renderProducts();
   renderCart();
   if (lastOrdersDocs) renderOrdersList(lastOrdersDocs);
@@ -737,6 +755,12 @@ function copyWhatsAppMessage() {
     .then(() => showToast(t('toast_copied')))
     .catch(() => showToast(t('toast_copy_failed')));
 }
+function copyStoreLink() {
+  const link = window.location.origin + window.location.pathname;
+  navigator.clipboard.writeText(link)
+    .then(() => showToast(t('toast_link_copied')))
+    .catch(() => showToast(t('toast_copy_failed')));
+}
 const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="#F5EDE4"/><text x="50%" y="50%" font-family="sans-serif" font-size="16" fill="#A89484" text-anchor="middle" dominant-baseline="middle">Sin imagen</text></svg>`
 );
@@ -760,10 +784,9 @@ auth.onAuthStateChanged(user => {
   isAdmin = !user.isAnonymous;
   clientId = user.uid;
 
-  document.getElementById('adminLabel').textContent = isAdmin ? t('admin_label_admin') : t('admin_label_client');
   document.getElementById('headerLogoBtn').classList.toggle('admin', isAdmin);
   document.getElementById('adminControlsArea').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('logoutBtn').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('adminToggleBar').style.display = isAdmin ? 'none' : 'flex';
   document.getElementById('stockFilterBar').style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('clearOrdersBtn').style.display = isAdmin ? 'block' : 'none';
   if(!isAdmin) currentStockFilter = 'all';

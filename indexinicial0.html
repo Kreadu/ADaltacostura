@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tienda de Ropa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fafafa;--surface:#fff;--surface-muted:#f5f5f5;--surface-raised:#fff;
+  --text-primary:#111;--text-secondary:#555;--text-tertiary:#888;--text-quaternary:#bbb;
+  --border:#e5e5e5;--accent:#2563eb;--positive:#16a34a;--warning:#f59e0b;--danger:#dc2626;
+  --chart-1:#2563eb;--chart-2:#dc2626;--chart-3:#16a34a;--chart-4:#7c3aed;--chart-5:#9ca3af;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:12px;--radius-full:999px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);--shadow-md:0 4px 12px rgba(0,0,0,0.08);
+  --transition:0.15s ease-out;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0a0a0a;--surface:#141414;--surface-muted:#1a1a1a;--surface-raised:#1e1e1e;
+    --text-primary:#f0f0f0;--text-secondary:#a0a0a0;--text-tertiary:#666;--text-quaternary:#444;
+    --border:#2a2a2a;}
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; overflow:hidden; }
+body { font-family:'Inter',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text-primary); }
+#app { max-width:480px; margin:0 auto; height:100vh; display:flex; flex-direction:column; position:relative; }
+
+/* ===== TAB BAR ===== */
+.tab-bar { display:flex; gap:2px; padding:6px 8px 8px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:50; flex-shrink:0; }
+.tab-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 2px; border:none; background:transparent; border-radius:var(--radius-md); cursor:pointer; color:var(--text-tertiary); font-size:11px; font-weight:500; transition:all var(--transition); position:relative; }
+.tab-btn.active { color:var(--text-primary); background:var(--surface-muted); }
+.tab-btn svg { width:22px; height:22px; stroke-width:1.8; }
+.badge { position:absolute; top:2px; right:6px; min-width:16px; height:16px; background:var(--text-primary); color:var(--surface); border-radius:var(--radius-full); font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:600; padding:0 4px; }
+
+/* ===== VIEWS ===== */
+.views { flex:1; overflow-y:auto; overflow-x:hidden; position:relative; scroll-behavior:smooth; }
+.view { display:none; padding:12px; min-height:100%; animation:fadeIn 0.2s ease-out; }
+.view.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+
+/* ===== SEARCH & FILTERS ===== */
+.search-box { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:12px; background:var(--surface-muted); }
+.search-box svg { color:var(--text-quaternary); flex-shrink:0; }
+.search-box input { border:none; background:transparent; outline:none; width:100%; font-size:14px; color:var(--text-primary); font-family:inherit; }
+.filters { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:14px; scrollbar-width:none; }
+.filters::-webkit-scrollbar { display:none; }
+.filter-chip { padding:7px 16px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--surface); font-size:13px; cursor:pointer; white-space:nowrap; color:var(--text-secondary); font-weight:500; transition:all var(--transition); }
+.filter-chip.active { background:var(--text-primary); color:var(--surface); border-color:var(--text-primary); }
+
+/* ===== PRODUCT GRID ===== */
+.product-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.product-card { border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--surface); cursor:pointer; transition:transform var(--transition), box-shadow var(--transition); box-shadow:var(--shadow-sm); }
+.product-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.product-img { height:170px; display:flex; align-items:center; justify-content:center; font-size:56px; position:relative; background:var(--surface-muted); }
+.product-img img { width:100%; height:100%; object-fit:cover; }
+.product-badge { position:absolute; top:8px; left:8px; padding:3px 8px; background:rgba(0,0,0,0.7); color:#fff; border-radius:var(--radius-sm); font-size:10px; font-weight:600; }
+.product-info { padding:12px; }
+.product-name { font-size:14px; font-weight:600; margin-bottom:4px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.product-meta { font-size:12px; color:var(--text-tertiary); margin-bottom:8px; }
+.product-price { font-size:17px; font-weight:700; }
+.product-actions { display:flex; gap:6px; margin-top:10px; }
+.btn-sm { flex:1; padding:7px 8px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; color:var(--text-secondary); transition:all var(--transition); }
+.btn-sm:hover { background:var(--surface-muted); }
+.btn-sm.btn-primary { background:var(--text-primary); color:var(--surface); border-color:var(--text-primary); }
+.btn-sm.btn-primary:hover { opacity:0.88; }
+
+/* ===== CART ===== */
+.cart-item { display:flex; gap:14px; padding:14px; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px; background:var(--surface); box-shadow:var(--shadow-sm); }
+.cart-img { width:76px; height:76px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:32px; flex-shrink:0; background:var(--surface-muted); overflow:hidden; }
+.cart-img img { width:100%; height:100%; object-fit:cover; }
+.cart-details { flex:1; min-width:0; }
+.cart-name { font-size:14px; font-weight:600; margin-bottom:2px; }
+.cart-variant { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+.cart-price { font-size:15px; font-weight:700; }
+.qty-controls { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.qty-btn { width:30px; height:30px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); transition:all var(--transition); }
+.qty-btn:hover { background:var(--surface-muted); }
+.qty-val { font-size:14px; font-weight:600; min-width:20px; text-align:center; }
+
+.empty-state { text-align:center; padding:50px 24px; color:var(--text-quaternary); }
+.empty-state svg { width:52px; height:52px; margin-bottom:14px; opacity:0.45; stroke-width:1.2; }
+.empty-state p { font-size:15px; font-weight:500; color:var(--text-secondary); }
+.empty-state p:last-child { font-size:13px; margin-top:4px; color:var(--text-tertiary); }
+
+.total-bar { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-top:1px solid var(--border); margin-top:12px; }
+.total-label { font-size:14px; color:var(--text-secondary); font-weight:500; }
+.total-value { font-size:22px; font-weight:700; }
+
+.whatsapp-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:14px; border:none; border-radius:var(--radius-md); background:var(--positive); color:#fff; font-size:15px; font-weight:600; cursor:pointer; margin-top:16px; transition:opacity var(--transition); box-shadow:0 2px 8px rgba(22,163,74,0.25); }
+.whatsapp-btn:hover { opacity:0.92; }
+.whatsapp-btn svg { width:20px; height:20px; }
+
+/* ===== ORDERS ===== */
+.admin-toggle { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface-muted); border-radius:var(--radius-md); margin-bottom:14px; font-size:13px; cursor:pointer; border:1px solid var(--border); font-weight:500; }
+.admin-toggle svg { color:var(--text-secondary); }
+.order-card { padding:14px; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px; background:var(--surface); box-shadow:var(--shadow-sm); }
+.order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.order-id { font-size:13px; font-weight:700; }
+.order-status { padding:3px 10px; border-radius:var(--radius-full); font-size:11px; font-weight:600; }
+.status-pendiente { background:color-mix(in srgb,var(--warning) 12%,transparent); color:var(--warning); }
+.status-confirmado { background:color-mix(in srgb,var(--positive) 12%,transparent); color:var(--positive); }
+.status-enviado { background:color-mix(in srgb,var(--accent) 12%,transparent); color:var(--accent); }
+.status-entregado { background:color-mix(in srgb,var(--text-quaternary) 12%,transparent); color:var(--text-tertiary); }
+.order-items { font-size:13px; color:var(--text-secondary); margin-bottom:6px; line-height:1.45; }
+.order-total { font-size:14px; font-weight:700; }
+.order-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+
+/* ===== CHAT ===== */
+.note-box { padding:10px 14px; background:color-mix(in srgb,var(--warning) 8%,transparent); border-radius:var(--radius-md); font-size:12px; color:var(--text-secondary); margin-bottom:12px; border:1px solid color-mix(in srgb,var(--warning) 18%,transparent); line-height:1.5; }
+.chat-container { display:flex; flex-direction:column; height:calc(100vh - 200px); min-height:320px; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--surface); }
+.chat-messages { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+.chat-bubble { max-width:82%; padding:10px 14px; border-radius:16px; font-size:13.5px; line-height:1.45; word-wrap:break-word; }
+.chat-bubble.client { align-self:flex-end; background:var(--text-primary); color:var(--surface); border-bottom-right-radius:4px; }
+.chat-bubble.seller { align-self:flex-start; background:var(--surface-muted); color:var(--text-primary); border-bottom-left-radius:4px; border:1px solid var(--border); }
+.chat-time { font-size:10px; opacity:0.55; margin-top:4px; }
+.chat-input-area { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border); background:var(--surface); }
+.chat-input { flex:1; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--surface-muted); outline:none; font-size:14px; font-family:inherit; color:var(--text-primary); }
+.chat-input:focus { border-color:var(--text-tertiary); }
+.chat-send { width:40px; height:40px; border:none; border-radius:var(--radius-md); background:var(--text-primary); color:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity var(--transition); }
+.chat-send:hover { opacity:0.88; }
+.chat-send:active { transform:scale(0.96); }
+
+/* ===== REVIEWS ===== */
+.review-card { padding:14px; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px; background:var(--surface); box-shadow:var(--shadow-sm); }
+.review-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.review-user { font-size:13px; font-weight:700; }
+.review-stars { color:var(--warning); font-size:15px; letter-spacing:1px; }
+.review-text { font-size:13.5px; color:var(--text-secondary); line-height:1.5; }
+.review-product { font-size:12px; color:var(--text-quaternary); margin-top:6px; font-weight:500; }
+.review-form { margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--surface); box-shadow:var(--shadow-sm); }
+.review-form-title { font-size:15px; font-weight:700; margin-bottom:14px; }
+.star-input { display:flex; gap:6px; margin-bottom:12px; }
+.star-input button { background:transparent; border:none; cursor:pointer; font-size:24px; color:var(--text-quaternary); transition:color var(--transition), transform var(--transition); padding:0; line-height:1; }
+.star-input button:hover { transform:scale(1.15); }
+.star-input button.active { color:var(--warning); }
+.form-input { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px; font-size:14px; font-family:inherit; background:var(--surface-muted); color:var(--text-primary); outline:none; transition:border-color var(--transition); }
+.form-input:focus { border-color:var(--text-tertiary); }
+.form-textarea { min-height:70px; resize:vertical; }
+
+/* ===== MODAL ===== */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:flex-end; justify-content:center; z-index:100; animation:fadeIn 0.15s ease-out; }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--surface); border-radius:var(--radius-lg) var(--radius-lg) 0 0; width:100%; max-width:480px; max-height:88vh; overflow-y:auto; padding:20px; animation:slideUp 0.25s cubic-bezier(0.16,1,0.3,1); }
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; position:sticky; top:0; background:var(--surface); padding-bottom:8px; z-index:5; }
+.modal-title { font-size:18px; font-weight:700; }
+.modal-close { width:36px; height:36px; border:none; border-radius:var(--radius-md); background:var(--surface-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); transition:all var(--transition); }
+.modal-close:hover { background:var(--border); color:var(--text-primary); }
+.modal-img { height:240px; display:flex; align-items:center; justify-content:center; font-size:90px; border-radius:var(--radius-md); margin-bottom:18px; background:var(--surface-muted); overflow:hidden; }
+.modal-img img { width:100%; height:100%; object-fit:cover; }
+.modal-price { font-size:26px; font-weight:700; margin-bottom:6px; }
+.modal-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:18px; }
+.section-label { font-size:13px; font-weight:600; margin-bottom:8px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; }
+.color-options { display:flex; gap:10px; margin:8px 0 16px; }
+.color-opt { width:32px; height:32px; border-radius:50%; border:3px solid transparent; cursor:pointer; position:relative; transition:transform var(--transition); }
+.color-opt:hover { transform:scale(1.1); }
+.color-opt.active { border-color:var(--text-primary); box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text-primary); }
+.size-options { display:flex; gap:8px; margin:8px 0 18px; flex-wrap:wrap; }
+.size-opt { padding:8px 18px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); font-size:13px; font-weight:600; cursor:pointer; transition:all var(--transition); }
+.size-opt.active { background:var(--text-primary); color:var(--surface); border-color:var(--text-primary); }
+.size-opt:hover:not(.active) { border-color:var(--text-tertiary); }
+.btn-full { width:100%; padding:14px; border:none; border-radius:var(--radius-md); background:var(--text-primary); color:var(--surface); font-size:15px; font-weight:600; cursor:pointer; transition:opacity var(--transition); display:flex; align-items:center; justify-content:center; gap:8px; }
+.btn-full:hover { opacity:0.9; }
+.btn-full:active { transform:scale(0.98); }
+
+/* ===== TOAST ===== */
+.toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text-primary); color:var(--surface); padding:10px 20px; border-radius:var(--radius-md); font-size:13px; font-weight:500; opacity:0; pointer-events:none; transition:all 0.3s ease; z-index:200; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:var(--radius-full); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-view="catalogo" onclick="switchView('catalogo')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Catálogo</span>
+    </button>
+    <button class="tab-btn" data-view="carrito" onclick="switchView('carrito')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span style="position:relative">Carrito<span id="cartBadge" class="badge" style="display:none">0</span></span>
+    </button>
+    <button class="tab-btn" data-view="pedidos" onclick="switchView('pedidos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Pedidos</span>
+    </button>
+    <button class="tab-btn" data-view="chat" onclick="switchView('chat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+      <span style="position:relative">Chat<span id="chatBadge" class="badge" style="display:none">0</span></span>
+    </button>
+    <button class="tab-btn" data-view="resenas" onclick="switchView('resenas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>Reseñas</span>
+    </button>
+  </div>
+
+  <div class="views">
+    <!-- CATÁLOGO -->
+    <div id="catalogo" class="view active">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar vestidos, blusas..." oninput="filterProducts()">
+      </div>
+      <div class="filters">
+        <button class="filter-chip active" data-filter="all" onclick="setCategory('all')">Todo</button>
+        <button class="filter-chip" data-filter="vestidos" onclick="setCategory('vestidos')">Vestidos</button>
+        <button class="filter-chip" data-filter="blusas" onclick="setCategory('blusas')">Blusas</button>
+        <button class="filter-chip" data-filter="pantalones" onclick="setCategory('pantalones')">Pantalones</button>
+        <button class="filter-chip" data-filter="faldas" onclick="setCategory('faldas')">Faldas</button>
+      </div>
+      <div id="productGrid" class="product-grid"></div>
+    </div>
+
+    <!-- CARRITO -->
+    <div id="carrito" class="view">
+      <div id="cartItems"></div>
+      <div id="cartEmpty" class="empty-state" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <p>Tu carrito está vacío</p>
+        <p>Explora el catálogo y elige tus favoritas</p>
+      </div>
+      <div id="cartSummary" style="display:none">
+        <div class="total-bar">
+          <span class="total-label">Total a pagar</span>
+          <span class="total-value" id="cartTotal">$0</span>
+        </div>
+        <button class="whatsapp-btn" onclick="sendWhatsAppOrder()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Pedir por WhatsApp
+        </button>
+      </div>
+    </div>
+
+    <!-- PEDIDOS -->
+    <div id="pedidos" class="view">
+      <div class="admin-toggle" onclick="toggleAdmin()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="adminLabel">Modo cliente</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-quaternary)">Toca para cambiar ↻</span>
+      </div>
+      <div id="ordersList"></div>
+      <div id="ordersEmpty" class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <p>No hay pedidos aún</p>
+        <p>Cuando hagas un pedido por WhatsApp, aparecerá aquí</p>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chat" class="view">
+      <div class="note-box">
+        💬 Este chat es privado entre tú y la vendedora. También puedes escribirle directo por WhatsApp tocando el botón verde en el carrito.
+      </div>
+      <div class="chat-container">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-area">
+          <input type="text" id="chatInput" class="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter')sendChat()">
+          <button class="chat-send" onclick="sendChat()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESEÑAS -->
+    <div id="resenas" class="view">
+      <div id="reviewsList"></div>
+      <div class="review-form">
+        <div class="review-form-title">¿Te gustó la ropa? Cuéntanos</div>
+        <div class="star-input" id="starInput">
+          <button onclick="setStars(1)">★</button>
+          <button onclick="setStars(2)">★</button>
+          <button onclick="setStars(3)">★</button>
+          <button onclick="setStars(4)">★</button>
+          <button onclick="setStars(5)">★</button>
+        </div>
+        <input type="text" id="reviewName" class="form-input" placeholder="Tu nombre">
+        <textarea id="reviewText" class="form-input form-textarea" placeholder="¿Qué te pareció la calidad, el envío, la atención?"></textarea>
+        <button class="btn-full" onclick="submitReview()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Publicar reseña
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="productModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle">Producto</span>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIGURACIÓN — CAMBIA ESTOS DATOS
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  // 📱 Número de WhatsApp de la vendedora (con código de país, sin + ni espacios)
+  // Ejemplo: Perú = 51999999999, México = 5215512345678, Colombia = 573001234567
+  whatsappNumber: "51999999999",
+
+  // 🏷️ Nombre de la tienda
+  storeName: "Tienda de Ropa",
+
+  // 👗 PRODUCTOS — Agrega los de tu señora aquí
+  // Para poner foto real, reemplaza "emoji" por "image" con la URL de la foto
+  products: [
+    {
+      id: 1,
+      name: "Vestido camisero blanco",
+      category: "vestidos",
+      price: 45,
+      color: "#f5f0e8",
+      colors: ["#f5f0e8", "#2d2d2d", "#c4a77d"],
+      sizes: ["S", "M", "L", "XL"],
+      emoji: "👗",
+      // image: "https://tusitio.com/foto1.jpg",  // <-- Descomenta y pon la URL real
+      desc: "Vestido camisero elegante, perfecto para oficina o salidas. Tela fresca y cómoda."
+    },
+    {
+      id: 2,
+      name: "Blusa rayas azul",
+      category: "blusas",
+      price: 32,
+      color: "#e8eef5",
+      colors: ["#e8eef5", "#fff", "#f5e8e8"],
+      sizes: ["S", "M", "L"],
+      emoji: "👔",
+      desc: "Blusa clásica a rayas, corte entallado. Ideal para looks formales."
+    },
+    {
+      id: 3,
+      name: "Pantalón wide leg beige",
+      category: "pantalones",
+      price: 55,
+      color: "#e8ddd0",
+      colors: ["#e8ddd0", "#2d2d2d", "#8b7355"],
+      sizes: ["S", "M", "L", "XL"],
+      emoji: "👖",
+      desc: "Pantalón wide leg de tela suave. Cintura alta y caída elegante."
+    },
+    {
+      id: 4,
+      name: "Vestido midi verde oliva",
+      category: "vestidos",
+      price: 58,
+      color: "#d4d9c8",
+      colors: ["#d4d9c8", "#2d2d2d", "#c4a77d"],
+      sizes: ["S", "M", "L"],
+      emoji: "👗",
+      desc: "Vestido midi con botones frontales. Estilo bohemio y fresco."
+    },
+    {
+      id: 5,
+      name: "Blusa hombros descubiertos",
+      category: "blusas",
+      price: 38,
+      color: "#fff",
+      colors: ["#fff", "#f5e8e8", "#e8eef5"],
+      sizes: ["S", "M", "L", "XL"],
+      emoji: "👚",
+      desc: "Blusa romántica con volantes y hombros descubiertos. Perfecta para verano."
+    },
+    {
+      id: 6,
+      name: "Falda plisada negra",
+      category: "faldas",
+      price: 42,
+      color: "#2d2d2d",
+      colors: ["#2d2d2d", "#f5f0e8", "#8b4513"],
+      sizes: ["S", "M", "L"],
+      emoji: "👗",
+      desc: "Falda plisada midi. Elegante y versátil para cualquier ocasión."
+    },
+    {
+      id: 7,
+      name: "Conjunto blusa + pantalón",
+      category: "blusas",
+      price: 75,
+      color: "#f5f0e8",
+      colors: ["#f5f0e8", "#d4d9c8", "#e8ddd0"],
+      sizes: ["S", "M", "L", "XL"],
+      emoji: "🧥",
+      desc: "Conjunto coordinado de blusa y pantalón. Look completo sin pensar."
+    },
+    {
+      id: 8,
+      name: "Vestido negro botones",
+      category: "vestidos",
+      price: 48,
+      color: "#2d2d2d",
+      colors: ["#2d2d2d", "#f5f0e8", "#8b4513"],
+      sizes: ["S", "M", "L"],
+      emoji: "👗",
+      desc: "Vestido negro con botones dorados y moños en mangas. Chic y moderno."
+    }
+  ]
+};
+
+// ═══════════════════════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════════════════════
+let cart = JSON.parse(localStorage.getItem('tienda_cart') || '[]');
+let orders = JSON.parse(localStorage.getItem('tienda_orders') || '[]');
+let reviews = JSON.parse(localStorage.getItem('tienda_reviews') || JSON.stringify([
+  {user:"María G.", stars:5, text:"La blusa rayas es hermosa, la tela es de muy buena calidad. Me quedó perfecta.", product:"Blusa rayas azul", date:"2026-08-28"},
+  {user:"Laura M.", stars:4, text:"El vestido camisero me quedó perfecto. El envío fue rápido y bien empacado.", product:"Vestido camisero blanco", date:"2026-08-25"},
+  {user:"Carmen R.", stars:5, text:"Excelente atención, la ropa es tal cual se ve en las fotos. Volveré a comprar.", product:"Conjunto blusa + pantalón", date:"2026-08-20"}
+]));
+let chatMessages = JSON.parse(localStorage.getItem('tienda_chat') || JSON.stringify([
+  {from:"seller", text:"¡Hola! Bienvenida a nuestra tienda. ¿En qué puedo ayudarte hoy? 💕", time:"10:00"}
+]));
+let currentCategory = 'all';
+let currentSearch = '';
+let selectedStars = 0;
+let isAdmin = false;
+let selectedProduct = null;
+let selectedColor = null;
+let selectedSize = null;
+
+// ═══════════════════════════════════════════════════════════
+//  INICIALIZAR
+// ═══════════════════════════════════════════════════════════
+function init() {
+  renderProducts();
+  renderCart();
+  renderOrders();
+  renderChat();
+  renderReviews();
+  updateBadges();
+  document.title = CONFIG.storeName;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CATÁLOGO
+// ═══════════════════════════════════════════════════════════
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  let filtered = CONFIG.products.filter(p => {
+    const matchCat = currentCategory === 'all' || p.category === currentCategory;
+    const matchSearch = p.name.toLowerCase().includes(currentSearch.toLowerCase());
+    return matchCat && matchSearch;
+  });
+  grid.innerHTML = filtered.map(p => {
+    const imgHtml = p.image
+      ? `<img src="${p.image}" alt="${p.name}" loading="lazy">`
+      : p.emoji;
+    return `
+    <div class="product-card" onclick="openProduct(${p.id})">
+      <div class="product-img" style="background:${p.color}">${imgHtml}</div>
+      <div class="product-info">
+        <div class="product-name">${p.name}</div>
+        <div class="product-meta">${p.sizes.join(' · ')}</div>
+        <div class="product-price">$${p.price}</div>
+        <div class="product-actions">
+          <button class="btn-sm" onclick="event.stopPropagation();quickAdd(${p.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:40px 20px;"><p>No se encontraron productos</p><p style="font-size:13px;margin-top:4px">Prueba con otra búsqueda</p></div>`;
+  }
+}
+
+function setCategory(cat) {
+  currentCategory = cat;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === cat));
+  renderProducts();
+}
+
+function filterProducts() {
+  currentSearch = document.getElementById('searchInput').value;
+  renderProducts();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL PRODUCTO
+// ═══════════════════════════════════════════════════════════
+function openProduct(id) {
+  selectedProduct = CONFIG.products.find(p => p.id === id);
+  selectedColor = selectedProduct.colors[0];
+  selectedSize = selectedProduct.sizes[0];
+  document.getElementById('modalTitle').textContent = selectedProduct.name;
+  const imgHtml = selectedProduct.image
+    ? `<img src="${selectedProduct.image}" alt="${selectedProduct.name}">`
+    : selectedProduct.emoji;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-img" style="background:${selectedProduct.color}">${imgHtml}</div>
+    <div class="modal-price">$${selectedProduct.price}</div>
+    <p class="modal-desc">${selectedProduct.desc}</p>
+    <div class="section-label">Color</div>
+    <div class="color-options">
+      ${selectedProduct.colors.map(c => `<div class="color-opt ${c === selectedColor ? 'active' : ''}" style="background:${c}" onclick="selectColor('${c}')"></div>`).join('')}
+    </div>
+    <div class="section-label">Talla</div>
+    <div class="size-options">
+      ${selectedProduct.sizes.map(s => `<button class="size-opt ${s === selectedSize ? 'active' : ''}" onclick="selectSize('${s}')">${s}</button>`).join('')}
+    </div>
+    <button class="btn-full" onclick="addToCartFromModal()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      Agregar al carrito
+    </button>
+  `;
+  document.getElementById('productModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function selectColor(c) { selectedColor = c; openProduct(selectedProduct.id); }
+function selectSize(s) { selectedSize = s; openProduct(selectedProduct.id); }
+
+function addToCartFromModal() {
+  addToCart(selectedProduct.id, selectedColor, selectedSize);
+  closeModal();
+}
+
+function closeModal(e) {
+  if (!e || e.target.id === 'productModal') {
+    document.getElementById('productModal').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+function quickAdd(id) {
+  const p = CONFIG.products.find(x => x.id === id);
+  addToCart(id, p.colors[0], p.sizes[0]);
+}
+
+function addToCart(id, color, size) {
+  const existing = cart.find(item => item.id === id && item.color === color && item.size === size);
+  if (existing) { existing.qty++; }
+  else { cart.push({ id, color, size, qty: 1 }); }
+  saveCart();
+  renderCart();
+  updateBadges();
+  showToast('✓ Agregado al carrito');
+}
+
+function saveCart() { localStorage.setItem('tienda_cart', JSON.stringify(cart)); }
+
+// ═══════════════════════════════════════════════════════════
+//  CARRITO
+// ═══════════════════════════════════════════════════════════
+function renderCart() {
+  const container = document.getElementById('cartItems');
+  const empty = document.getElementById('cartEmpty');
+  const summary = document.getElementById('cartSummary');
+  if (cart.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; summary.style.display = 'none'; return; }
+  empty.style.display = 'none'; summary.style.display = 'block';
+  let total = 0;
+  container.innerHTML = cart.map(item => {
+    const p = CONFIG.products.find(x => x.id === item.id);
+    const subtotal = p.price * item.qty;
+    total += subtotal;
+    const imgHtml = p.image ? `<img src="${p.image}" alt="${p.name}">` : p.emoji;
+    return `
+      <div class="cart-item">
+        <div class="cart-img" style="background:${item.color}">${imgHtml}</div>
+        <div class="cart-details">
+          <div class="cart-name">${p.name}</div>
+          <div class="cart-variant">Talla ${item.size} · Color seleccionado</div>
+          <div class="cart-price">$${subtotal}</div>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="updateQty('${item.id}','${item.color}','${item.size}',-1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="qty-val">${item.qty}</span>
+            <button class="qty-btn" onclick="updateQty('${item.id}','${item.color}','${item.size}',1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="qty-btn" style="margin-left:auto" onclick="removeItem('${item.id}','${item.color}','${item.size}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('cartTotal').textContent = '$' + total;
+}
+
+function updateQty(id, color, size, delta) {
+  const item = cart.find(i => i.id == id && i.color == color && i.size == size);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart = cart.filter(i => !(i.id == id && i.color == color && i.size == size));
+  saveCart(); renderCart(); updateBadges();
+}
+
+function removeItem(id, color, size) {
+  cart = cart.filter(i => !(i.id == id && i.color == color && i.size == size));
+  saveCart(); renderCart(); updateBadges();
+}
+
+function sendWhatsAppOrder() {
+  if (cart.length === 0) return;
+  let msg = `¡Hola! Quiero hacer un pedido desde ${CONFIG.storeName}:
+
+`;
+  let total = 0;
+  cart.forEach(item => {
+    const p = CONFIG.products.find(x => x.id === item.id);
+    msg += `• ${p.name} (Talla ${item.size}) x${item.qty} = $${p.price * item.qty}
+`;
+    total += p.price * item.qty;
+  });
+  msg += `
+💰 Total: $${total}
+
+¿Podemos coordinar el pago y envío? Gracias 💕`;
+
+  const order = {
+    id: 'PED-' + Date.now().toString().slice(-6),
+    items: cart.map(item => { const p = CONFIG.products.find(x => x.id === item.id); return { name: p.name, size: item.size, qty: item.qty, price: p.price }; }),
+    total: total,
+    status: 'pendiente',
+    date: new Date().toLocaleDateString(),
+    client: 'Cliente Web'
+  };
+  orders.unshift(order);
+  localStorage.setItem('tienda_orders', JSON.stringify(orders));
+
+  window.open('https://wa.me/' + CONFIG.whatsappNumber + '?text=' + encodeURIComponent(msg), '_blank');
+
+  cart = []; saveCart(); renderCart(); updateBadges(); renderOrders();
+  showToast('📲 Redirigiendo a WhatsApp...');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PEDIDOS
+// ═══════════════════════════════════════════════════════════
+function toggleAdmin() {
+  isAdmin = !isAdmin;
+  document.getElementById('adminLabel').textContent = isAdmin ? 'Modo vendedora (admin)' : 'Modo cliente';
+  renderOrders();
+}
+
+function renderOrders() {
+  const list = document.getElementById('ordersList');
+  const empty = document.getElementById('ordersEmpty');
+  if (orders.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = orders.map(o => `
+    <div class="order-card">
+      <div class="order-header">
+        <span class="order-id">${o.id}</span>
+        <span class="order-status status-${o.status}">${o.status}</span>
+      </div>
+      <div class="order-items">${o.items.map(i => `${i.name} (Talla ${i.size}) x${i.qty}`).join(', ')}</div>
+      <div class="order-total">Total: $${o.total} · ${o.date}</div>
+      ${isAdmin ? `
+      <div class="order-actions">
+        <button class="btn-sm" onclick="updateOrderStatus('${o.id}','confirmado')">✓ Confirmar</button>
+        <button class="btn-sm" onclick="updateOrderStatus('${o.id}','enviado')">📦 Enviar</button>
+        <button class="btn-sm" onclick="updateOrderStatus('${o.id}','entregado')">🎁 Entregar</button>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+function updateOrderStatus(id, status) {
+  const o = orders.find(x => x.id === id);
+  if (o) { o.status = status; localStorage.setItem('tienda_orders', JSON.stringify(orders)); renderOrders(); showToast('Pedido ' + status); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHAT
+// ═══════════════════════════════════════════════════════════
+function renderChat() {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = chatMessages.map(m => `
+    <div class="chat-bubble ${m.from}">
+      ${escapeHtml(m.text)}
+      <div class="chat-time">${m.time}</div>
+    </div>
+  `).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const now = new Date();
+  const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+  chatMessages.push({ from: 'client', text, time });
+  input.value = '';
+  localStorage.setItem('tienda_chat', JSON.stringify(chatMessages));
+  renderChat();
+  updateBadges();
+  setTimeout(() => {
+    const replies = [
+      "¡Claro que sí! 💕",
+      "Déjame revisar disponibilidad...",
+      "Tenemos en stock, ¿qué talla necesitas?",
+      "El envío tarda 2-3 días hábiles.",
+      "¡Perfecto! Te preparo el pedido.",
+      "¿Te gustaría que te envíe fotos de otros colores?"
+    ];
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    const t = new Date();
+    chatMessages.push({ from: 'seller', text: reply, time: t.getHours() + ':' + String(t.getMinutes()).padStart(2, '0') });
+    localStorage.setItem('tienda_chat', JSON.stringify(chatMessages));
+    renderChat();
+    updateBadges();
+  }, 1200 + Math.random() * 1000);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RESEÑAS
+// ═══════════════════════════════════════════════════════════
+function renderReviews() {
+  const list = document.getElementById('reviewsList');
+  list.innerHTML = reviews.map(r => `
+    <div class="review-card">
+      <div class="review-header">
+        <span class="review-user">${escapeHtml(r.user)}</span>
+        <span class="review-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}</span>
+      </div>
+      <div class="review-text">${escapeHtml(r.text)}</div>
+      <div class="review-product">${r.product} · ${r.date}</div>
+    </div>
+  `).join('');
+}
+
+function setStars(n) {
+  selectedStars = n;
+  const btns = document.getElementById('starInput').children;
+  for (let i = 0; i < 5; i++) btns[i].classList.toggle('active', i < n);
+}
+
+function submitReview() {
+  const name = document.getElementById('reviewName').value.trim();
+  const text = document.getElementById('reviewText').value.trim();
+  if (!name || !text || selectedStars === 0) { showToast('Completa nombre, estrellas y comentario'); return; }
+  reviews.unshift({ user: name, stars: selectedStars, text, product: 'Tienda general', date: new Date().toLocaleDateString() });
+  localStorage.setItem('tienda_reviews', JSON.stringify(reviews));
+  renderReviews();
+  document.getElementById('reviewName').value = '';
+  document.getElementById('reviewText').value = '';
+  setStars(0);
+  showToast('✓ Reseña publicada');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════════════════════
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(view).classList.add('active');
+  document.querySelector(`[data-view="${view}"]`).classList.add('active');
+  if (view === 'pedidos') renderOrders();
+  if (view === 'chat') { updateBadges(); renderChat(); }
+}
+
+function updateBadges() {
+  const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+  const cb = document.getElementById('cartBadge');
+  cb.textContent = cartCount; cb.style.display = cartCount > 0 ? 'flex' : 'none';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Iniciar
+init();
+</script>
+
+</body>
+</html>
